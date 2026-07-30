@@ -1,0 +1,34 @@
+version: 2
+
+sources:
+  - name: ods
+    schema: ods
+    tables:
+      - name: companies
+        description: "Компании из ODS"
+        columns:
+          - name: id
+            description: "ID компании"
+          - name: name
+            description: "Название компании"
+          - name: inn
+            description: "ИНН компании"
+          - name: registration_date
+            description: "Дата регистрации компании"
+          - name: industry
+            description: "Индустрия компании"
+          - name: loaded_at
+            description: "Время загрузки в ODS"
+      - name: contracts
+        description: "Договоры из ODS"
+        columns:
+          - name: id
+            description: "ID договора"
+          - name: company_id
+            description: "ID компании, с которой заключен договор"
+          - name: amount
+            description: "Сумма договора"
+          - name: status
+            description: "Статус договора"
+          - name: loaded_at
+            description: "Время загрузки в ODS"
