@@ -1,6 +1,5 @@
 {{ config(
-    materialized='view',
-    schema='staging'
+    materialized='view'
 )}}
 
 SELECT
@@ -10,15 +9,13 @@ SELECT
     , registration_date
     , region
     , industry
-    , loaded_at
 
     , MD5(
         COALESCE("name", '') || '|' ||
         COALESCE(inn, '') || '|' ||
-        COALESCE(registration_date, '') || '|' ||
+        COALESCE(registration_date::varchar, '') || '|' ||
         COALESCE(region, '') || '|' ||
-        COALESCE(industry, '') || '|' ||
-    ) AS hashdiff
+        COALESCE(industry, ''))::varchar(64) AS hashdiff
 
 FROM {{ source('ods', 'companies') }}
 WHERE id IS NOT NULL

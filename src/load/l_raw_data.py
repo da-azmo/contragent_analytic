@@ -46,3 +46,5 @@ def load_data_to_dwh():
 
     except Exception as error:
         print(f'Ошибка: {error}')
+
+load_data_to_dwh()

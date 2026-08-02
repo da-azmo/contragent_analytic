@@ -40,11 +40,3 @@ models:
       +materialized: incremental
       +schema: dds
       +tags: ["dds"]
-
-      dim:
-        +materialized: incremental
-        +on_schema_change: sync_all_columns # останавливает выполнение при изменении схемы
-
-      facts:
-        +materialized: incremental
-        +tags: ["fact"]

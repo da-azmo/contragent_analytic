@@ -1,6 +1,5 @@
 {{ config(
-    materialized='view',
-    schema='staging'
+    materialized='view'
 )}}
 
 SELECT
@@ -8,13 +7,11 @@ SELECT
     , company_id
     , amount
     , "status"
-    , loaded_at
 
     , MD5(
-        COALESCE(company_id, '') || '|' ||
-        COALESCE(amount, '') || '|' ||
-        COALESCE("status", '') || '|' ||
-    ) AS hashdiff
+        COALESCE(company_id::varchar, '') || '|' ||
+        COALESCE(amount::varchar, '') || '|' ||
+        COALESCE("status", ''))::varchar(64) AS hashdiff
 
 FROM {{ source('ods', 'contracts') }}
 WHERE id IS NOT NULL

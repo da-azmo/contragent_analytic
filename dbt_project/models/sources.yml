@@ -2,7 +2,6 @@ version: 2
 
 sources:
   - name: ods
-    schema: ods
     tables:
       - name: companies
         description: "Компании из ODS"
@@ -32,3 +31,29 @@ sources:
             description: "Статус договора"
           - name: loaded_at
             description: "Время загрузки в ODS"
+
+  - name: dds
+    schema: dds
+    tables:
+      - name: dim_dates
+        columns:
+          - name: date_sk
+            description: "Суррогатный ключ"
+          - name: date
+            description: "Дата"
+          - name: year
+            description: "Год"
+          - name: quarter
+            description: "Квартал"
+          - name: month
+            description: "Месяц"
+          - name: month_name
+            description: "Название месяца"
+          - name: day
+            description: "День"
+          - name: day_of_week
+            description: "День недели"
+          - name: day_name
+            description: "Название дня"
+          - name: is_weekend
+            description: "Выходной"
