@@ -48,7 +48,7 @@ WHERE NOT EXISTS (
     SELECT 1
     FROM existing e
     WHERE
-        s.hashdiff = e.hashdiff
+        s.id = e.company_bk AND s.hashdiff = e.hashdiff
 )
 {% endif %}
 
@@ -72,6 +72,6 @@ WHERE EXISTS (
     SELECT 1
     FROM source s
     WHERE
-        s.hashdiff != e.hashdiff
+        s.id = e.company_bk AND s.hashdiff != e.hashdiff
 )
 {% endif %}
