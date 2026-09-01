@@ -1,0 +1,39 @@
+import sys
+from pathlib import Path
+
+sys.path.append(str(Path(__file__).parent.parent))
+sys.path.append(str(Path(__file__).parent.parent / "extract"))
+
+from db_utils import get_spark_session
+from generate_data import generate_datas
+from e_from_raw import extract_from_raw
+
+def main():
+    print("Запуск")
+
+    spark = get_spark_session()
+
+    try:
+        print("Generate")
+        generate_datas(spark)
+
+        print("Extract")
+        extract_from_raw(spark)
+
+        print("Transform")
+
+
+        print("Load")
+
+
+        print("Gone")
+
+    except Exception as e:
+        print(f"Ошибка: {e}")
+        raise
+    
+    finally:
+        spark.stop()
+
+if __name__ == "__main__":
+    main()

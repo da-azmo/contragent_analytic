@@ -3,15 +3,15 @@ database:
     connection:
       user: postgres
       password: 1234
-      host: 127.0.0.1
+      host: 172.21.48.1
       port: 5432
     schemas:
       - name: datas
         tables:
           - name: companies
-            file: D:/source/companies.csv
+            file: /mnt/d/source/companies.csv
           - name: contracts
-            file: D:/source/contracts.csv
+            file: /mnt/d/source/contracts.csv
 
   - name: dwh
     connection:
