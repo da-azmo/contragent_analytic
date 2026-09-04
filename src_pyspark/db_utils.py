@@ -3,7 +3,7 @@ from pathlib import Path
 from pyspark.sql import SparkSession
 
 def load_config():
-    config_path = Path(__file__).parent.parent / 'config.yaml'
+    config_path = Path(__file__).parent.parent / 'config_spark.yaml'
     with open(config_path, 'r', encoding='UTF-8') as file:
         config = yaml.safe_load(file)
     return config
@@ -64,7 +64,8 @@ def get_all_tables(db_name: str, schema_name: str):
                     'schema': schema['name'],
                     'name': table['name'],
                     'full_name': f"{schema['name']}.{table['name']}",
-                    'file': table.get('file')
+                    'file': table.get('file'),
+                    'dtype': table.get('dtype')
                 })
 
     return tables
