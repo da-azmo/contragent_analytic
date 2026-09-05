@@ -10,11 +10,10 @@ from db_utils import get_all_tables, get_jdbc_options
 def extract_from_raw(spark: SparkSession):
     dataframes = {}
     tables = get_all_tables('raw', 'datas')
+    options = get_jdbc_options('raw')
 
     for table_info in tables:
         table_name = table_info['name']
-
-        options = get_jdbc_options('raw')
         options['dbtable'] = table_name
 
         df = spark.read \
