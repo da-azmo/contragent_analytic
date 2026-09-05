@@ -1,3 +1,6 @@
+# UPSERT, MERGE, ON CONFLICT на PySpark не делать: сложно (придется возиться в JDBC, временными таблицами).
+# UPSERT лучше делать через dbt
+
 from pyspark.sql import SparkSession
 import sys
 from pathlib import Path
