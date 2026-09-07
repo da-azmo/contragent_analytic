@@ -1,50 +1,56 @@
-import pandas as pd
+# DOES NOT WORK!!!
+
+# UPSERT, MERGE, ON CONFLICT на PySpark не делать: сложно (придется возиться в JDBC, временными таблицами).
+# UPSERT лучше делать через dbt
+
+from pyspark.sql import SparkSession
 import sys
 from pathlib import Path
-from sqlalchemy import text
 
 sys.path.append(str(Path(__file__).parent.parent))
 sys.path.append(str(Path(__file__).parent.parent / 'transform'))
 
-from db_utils import create_engine_for_db, get_schema_config
+from db_utils import get_jdbc_options
 from t_raw_dwh import transform_data_from_raw_to_dwh
 
-def load_data_to_dwh():
-
+def load_data_to_dwh(spark: SparkSession, dataframes_transformed: dict):
     try:
-        dataframes_transformed = transform_data_from_raw_to_dwh()
-        config_schema = get_schema_config('dwh', 'ods')
-        config_tables = config_schema['tables']
+        options = get_jdbc_options('dwh')
 
-        for table in config_tables:
+        for table_name, df in dataframes_transformed.items():
 
-            df = dataframes_transformed[table['name']]
+            df.write \
+                .format('jdbc') \
+                .options(**options) \
+                .option('dbtable', f'temp_{table_name}') \
+                .mode("overwrite") \
+                .save()
 
-            if df.empty:
-                raise Exception ('Невалидные данные')
+            columns = df.columns
+            string_columns = ', '.join(columns)
+            set_clause = ', '.join(f'{col} = EXCLUDED.{col}' for col in columns)
+            
+            query = f"""
+                INSERT INTO ods.{table_name} ({string_columns})
+                SELECT {string_columns} FROM temp_{table_name}
+                ON CONFLICT (id) DO UPDATE SET {set_clause}
+            """
 
-            columns = list(table['dtype'].keys())
-            columns_string = ', '.join(columns)
+            conn = spark._jvm.java.sql.DriverManager.getConnection(
+                options['url'],
+                options['user'],
+                str(options['password'])
+            )
 
-            placeholder = ', '.join(f':{col}' for col in columns)
-
-            update_columns = list(col for col in columns if col != table['pk'])
-            set_clause = ', '.join(f'{col} = EXCLUDED.{col}' for col in update_columns)
-
-            query = f'''INSERT INTO {config_schema['name']}.{table['name']} ({columns_string})
-                        VALUES ({placeholder})
-                        ON CONFLICT ({table['pk']}) DO UPDATE SET {set_clause};'''
-
-            df_to_insert = df[columns] #новый DataFrame, который содержит только указанные колонки
-            df_to_insert = df_to_insert.where(pd.notnull(df_to_insert), None)
-
-            records = df_to_insert.to_dict(orient='records')
-
-            with create_engine_for_db('dwh').connect() as conn:
-                conn.execute(text(query), records)
+            try:
+                stmt = conn.createStatement()
+                stmt.execute(query)
+                stmt.execute(f"DROP TABLE temp_{table_name}")
                 conn.commit()
+            finally:
+                conn.close()
+
+            print(f"✅ UPSERT выполнен для ods.{table_name}")
 
     except Exception as error:
-        print(f'Ошибка: {error}')
-
-load_data_to_dwh()
+        raise RuntimeError(f"❌ Ошибка при записи данных в таблицу: {error}") from error

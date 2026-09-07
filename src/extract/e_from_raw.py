@@ -1,27 +1,28 @@
-import pandas as pd
+from pyspark.sql import SparkSession
 import sys
 from pathlib import Path
 
-# __file__ — это встроенная магическая переменная в Python, которая хранит полный путь к текущему файлу, в котором она написана.
+sys_path = Path(__file__).parent.parent
+sys.path.append(str(sys_path))
 
-src_path = Path(__file__).parent.parent
-sys.path.append(str(src_path))
+from db_utils import get_all_tables, get_jdbc_options
 
-from db_utils import create_engine_for_db, get_schema_config
+def extract_from_raw(spark: SparkSession):
+    dataframes = {}
+    tables = get_all_tables('raw', 'datas')
+    options = get_jdbc_options('raw')
 
-def extract_data_from_raw():
+    for table_info in tables:
+        table_name = table_info['name']
+        options['dbtable'] = table_name
 
-    try:
-        with create_engine_for_db('raw').connect() as conn:
-            dataframes = {}
+        df = spark.read \
+            .format('jdbc') \
+            .options(**options) \
+            .load()
 
-            config_sch = get_schema_config('raw', 'datas')
+        dataframes[table_name] = df
+        print(f"Extracted {table_name} ({df.count()} rows)")
 
-            for table in config_sch['tables']:
-                key = f'{table['name']}'
-                dataframes[key] = pd.read_sql(f'select * from {table['name']}', conn)
-            return dataframes
-
-    except Exception as error:
-        print(f'При чтении данных из таблицы {table['name']} произошла ошибка: {error}')
-        return None
+    print(dataframes)
+    return dataframes
