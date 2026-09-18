@@ -1,6 +1,83 @@
 version: 2
 
 sources:
+  - name: staging
+    tables:
+      - name: temp_companies
+        description: "Компании из ODS"
+        columns:
+          - name: id
+            description: "ID компании"
+          - name: name
+            description: "Название компании"
+          - name: inn
+            description: "ИНН компании"
+          - name: registration_date
+            description: "Дата регистрации компании"
+          - name: region
+            description: "Регион компании"
+          - name: industry
+            description: "Индустрия компании"
+          - name: hashdiff
+            description: "Хеш компании"
+          - name: loaded_at
+            description: "Время загрузки в ODS"
+      - name: temp_contracts
+        description: "Договоры из ODS"
+        columns:
+          - name: id
+            description: "ID договора"
+          - name: company_id
+            description: "ID компании, с которой заключен договор"
+          - name: amount
+            description: "Сумма договора"
+          - name: contract_date
+            description: "Дата заключения договора"
+          - name: status
+            description: "Статус договора"
+          - name: hashdiff
+            description: "Хеш контракта"
+          - name: loaded_at
+            description: "Время загрузки в ODS"
+
+
+
+      - name: stg_from_ods_to_dds_companies
+        description: "Компании из ODS"
+        columns:
+          - name: id
+            description: "ID компании"
+          - name: name
+            description: "Название компании"
+          - name: inn
+            description: "ИНН компании"
+          - name: registration_date
+            description: "Дата регистрации компании"
+          - name: region
+            description: "Регион компании"
+          - name: industry
+            description: "Индустрия компании"
+          - name: hashdiff
+            description: "Хеш компании"
+
+      - name: stg_from_ods_to_dds_contracts
+        description: "Договоры из ODS"
+        columns:
+          - name: id
+            description: "ID договора"
+          - name: company_id
+            description: "ID компании, с которой заключен договор"
+          - name: contract_date
+            description: "Дата заключения договора"
+          - name: amount
+            description: "Сумма договора"
+          - name: status
+            description: "Статус договора"
+          - name: hashdiff
+            description: "Хеш контракта"
+
+
+
   - name: ods
     tables:
       - name: companies
@@ -14,10 +91,15 @@ sources:
             description: "ИНН компании"
           - name: registration_date
             description: "Дата регистрации компании"
+          - name: region
+            description: "Регион компании"
           - name: industry
             description: "Индустрия компании"
+          - name: hashdiff
+            description: "Хеш компании"
           - name: loaded_at
             description: "Время загрузки в ODS"
+
       - name: contracts
         description: "Договоры из ODS"
         columns:
@@ -25,12 +107,19 @@ sources:
             description: "ID договора"
           - name: company_id
             description: "ID компании, с которой заключен договор"
+          - name: contract_date
+            description: "Дата заключения договора"
           - name: amount
             description: "Сумма договора"
           - name: status
             description: "Статус договора"
+          - name: hashdiff
+            description: "Хеш контракта"
           - name: loaded_at
             description: "Время загрузки в ODS"
+
+
+
 
   - name: dds
     schema: dds

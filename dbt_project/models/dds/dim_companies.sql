@@ -1,77 +1,61 @@
-{{ config (
-    materialized='incremental',
-    unique_key='company_sk',
-    on_schema_change='fail'
-) }}
+--- «Какие исторические версии сущности доступны аналитике и какие ключи использовать для связи с FACT?»
 
-WITH source AS (
-    SELECT
-        id,
-        "name",
-        inn,
-        registration_date,
-        region,
-        industry,
-        hashdiff
-    FROM {{ ref('stg_companies') }}
-),
-existing AS (
-    SELECT
-        company_sk
-        , company_bk
+{{ config(
+    schema='dds',
+    materialized='incremental',
+    incremental_strategy = 'merge',
+    unique_key='dbt_scd_id',
+    on_schema_change='fail'
+)}}
+
+with snapshot_data as
+(
+    select
+        id
         , "name"
         , region
         , industry
-        , valid_from
-        , valid_to
-        , is_current
+        , registration_date
+        , dbt_valid_from
+        , COALESCE(dbt_valid_to, '2200-01-01'::timestamp) as valid_to
+        , dbt_valid_to is null as is_current
         , hashdiff
-    FROM {{ this }}
-    WHERE is_current = TRUE
+        , dbt_scd_id
+    from {{ ref('companies_snapshot')}}
+),
+dim_data as
+(
+    select
+        case when d.dbt_scd_id is null then NEXTVAL('dds.seq_company_sk')::bigint else d.company_sk end as company_sk
+        , s.id as company_bk
+        , s.name as "name"
+        , s.region as region
+        , s.industry as industry
+        , case when d.company_bk is null then s.registration_date::timestamp else s.dbt_valid_from end as valid_from
+        , s.valid_to as valid_to
+        , s.is_current as is_current
+        , s.hashdiff as hashdiff
+        , s.dbt_scd_id as dbt_scd_id
+    from snapshot_data s
+    left join {{ this }} d on d.dbt_scd_id = s.dbt_scd_id
+
+    {% if is_incremental() %}
+        WHERE d.dbt_scd_id is null
+        OR s.hashdiff <> d.hashdiff
+        OR s.valid_to <> d.valid_to
+        OR s.is_current <> d.is_current
+    {% endif %}
 )
 
 SELECT
-    NEXTVAL('dds.seq_company_sk')  AS company_sk
-    , s.id as company_bk
-    , s.name
-    , s.region
-    , s.industry
-    , CURRENT_TIMESTAMP::timestamp AS valid_from
-    , '2999-12-31'::timestamp AS valid_to
-    , TRUE AS is_current
-    , s.hashdiff
-
-FROM source s
-
-{% if is_incremental() %}
-WHERE NOT EXISTS (
-    SELECT 1
-    FROM existing e
-    WHERE
-        s.id = e.company_bk AND s.hashdiff = e.hashdiff
-)
-{% endif %}
-
-UNION ALL
-
-SELECT
-    e.company_sk
-    , e.company_bk
-    , e.name
-    , e.region
-    , e.industry
-    , e.valid_from
-    , CURRENT_TIMESTAMP::timestamp AS valid_to
-    , FALSE AS is_current
-    , e.hashdiff
-FROM existing e
-
-{% if is_incremental() %}
-
-WHERE EXISTS (
-    SELECT 1
-    FROM source s
-    WHERE
-        s.id = e.company_bk AND s.hashdiff != e.hashdiff
-)
-{% endif %}
+    company_sk
+    , company_bk
+    , "name"
+    , region
+    , industry
+    , valid_from
+    , valid_to
+    , is_current
+    , hashdiff
+    , dbt_scd_id
+FROM dim_data

@@ -1,72 +1,60 @@
+--- DIM хранит свойства контракта, которые могут иметь историю
+
 {{ config(
-    materialized = 'incremental',
-    unique_key = 'contract_sk',
+    materialized='incremental',
+    incremental_strategy='merge',
+    schema='dds',
+    unique_key='dbt_scd_id',
     on_schema_change='fail'
-) }}
+)}}
 
-WITH source AS (
+WITH snapshot_data as
+(
     SELECT
-        id
-        , company_id
-        , contract_date
-        , amount
+        id as contract_bk
+        , company_id as company_bk
         , "status"
+        , contract_date
+        , dbt_valid_from as valid_from
+        , COALESCE(dbt_valid_to, '2999-12-31'::timestamp) as valid_to
+        , dbt_valid_to IS NULL as is_current
         , hashdiff
-    FROM {{ ref('stg_contracts') }}
+        , dbt_scd_id
+    FROM {{ ref('contracts_snapshot') }}
 ),
-existing AS (
+dim_data as
+(
     SELECT
-        contract_sk
-        , contract_bk
-        , company_bk
-        , contract_date
-        , "status"
-        , valid_from
-        , valid_to
-        , is_current
-        , hashdiff
-    FROM {{ this }}
-    WHERE is_current = TRUE
+        CASE WHEN d.dbt_scd_id IS NULL THEN NEXTVAL('dds.seq_contract_sk')::bigint ELSE d.contract_sk END as contract_sk
+        , s.contract_bk
+        , s.company_bk
+        , s.status
+        , case when d.contract_bk is null then s.contract_date::timestamp else s.valid_from end as valid_from
+        , s.valid_to
+        , s.is_current
+        , s.hashdiff
+        , s.dbt_scd_id as dbt_scd_id
+    FROM snapshot_data s
+    LEFT JOIN {{ this }} d ON s.dbt_scd_id = d.dbt_scd_id
+
+    {% if is_incremental() %}
+
+        WHERE d.dbt_scd_id IS NULL
+        OR d.hashdiff <> s.hashdiff
+        OR d.valid_to <> s.valid_to
+        OR d.is_current <> s.is_current
+
+    {% endif %}
 )
 
 SELECT
-    NEXTVAL('dds.seq_contract_sk') AS contract_sk
-    , s.id as contract_bk
-    , s.company_id as company_bk
-    , s.contract_date as contract_date
-    , s.status as "status"
-    , CURRENT_TIMESTAMP::timestamp AS valid_from
-    , '2999-12-31'::timestamp AS valid_to
-    , TRUE AS is_current
-    , hashdiff AS hashdiff
-FROM source s
-
-{% if is_incremental() %}
-WHERE NOT EXISTS (
-    SELECT 1
-    FROM existing e
-    WHERE e.contract_bk = s.id AND e.hashdiff = s.hashdiff
-)
-{% endif %}
-
-UNION ALL
-
-SELECT
-    e.contract_sk
-    , e.contract_bk
-    , e.company_bk
-    , e.contract_date
-    , e.status
-    , e.valid_from
-    , CURRENT_TIMESTAMP::timestamp AS valid_to
-    , FALSE AS is_current
-    , e.hashdiff
-FROM existing e
-
-{% if is_incremental() %}
-WHERE EXISTS (
-    SELECT 1
-    FROM source s
-    WHERE e.contract_bk = s.id AND s.hashdiff != e.hashdiff
-)
-{% endif %}
+    contract_sk
+    , contract_bk
+    , company_bk
+    , "status"
+    , valid_from
+    , valid_to
+    , is_current
+    , hashdiff
+    , dbt_scd_id
+FROM dim_data

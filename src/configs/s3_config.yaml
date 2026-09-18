@@ -1,0 +1,9 @@
+layers:
+  - name: raw
+    tables:
+      - name: companies
+        file: file:///mnt/d/source/companies
+        target: s3a://raw-bucket/{execution_date}/companies
+      - name: contracts
+        file: file:///mnt/d/source/contracts
+        target: s3a://raw-bucket/{execution_date}/contracts

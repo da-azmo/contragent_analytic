@@ -1,0 +1,18 @@
+from pathlib import Path
+
+def get_drivers():
+    try:
+        minio_packages = "org.apache.hadoop:hadoop-aws:3.5.0,org.slf4j:slf4j-simple:2.0.16"
+        postgres_jar_package = Path(__file__).parent.parent.parent / "drivers" / "postgresql-42.7.13.jar"
+
+        if not postgres_jar_package.exists():
+            raise FileNotFoundError(
+                f"PostgreSQL JDBC драйвер не найден по пути: {postgres_jar_package}")
+
+        print(f"✅ Драйвер PostgreSQL найден: {postgres_jar_package}")
+        print(f"✅ MinIO пакеты: {minio_packages}")
+
+        return minio_packages, str(postgres_jar_package)
+    
+    except Exception as e:
+        raise FileNotFoundError(f"Драйвер не найден") from e
