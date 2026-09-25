@@ -54,9 +54,20 @@ def run_dbt_dds():
     cwd="./dbt_project",
     check=True)
 
+def run_dbt_dm():
+    subprocess.run([
+        "dbt",
+        "run",
+        "--select",
+        "dm"
+    ],
+    cwd="./dbt_project",
+    check=True)
+
 if __name__ == "__main__":
     run_spark()
     run_dbt_ods()
     run_dbt_staging()
     run_dbt_snapshot()
     run_dbt_dds()
+    run_dbt_dm()
