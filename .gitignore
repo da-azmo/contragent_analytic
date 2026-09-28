@@ -5,3 +5,13 @@ logs/
 .wsl_venv/
 .venv/
 .deprecated_practive/
+.airflow_venv/
+.dev_run
+.run_pipelines
+.run
+simple_auth_manager_passwords.json.generated
+airflow.db
+airflow.db-shm
+airflow.db-wal
+pipelines.cpython-312.pyc
+airflow.cfg
