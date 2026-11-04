@@ -14,7 +14,7 @@ Pipeline, который собирает данные о контрагента
 # Схема pipeline
 
 <p align="center">
-	<img src="../images/architecture_contagents_analytic.png" alt="Архитектура pipeline.">
+	<img src="./images/architecture_contagents_analytic.png" alt="Архитектура pipeline.">
 	<br>
 	Рис. 1. Архитектура pipeline.
 	<br>
